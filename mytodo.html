@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>To-Do List</title>
+</head>
+<body>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: purple;
+        }
+
+        .todo-container {
+            width: 601px;
+            margin: 0 auto;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #todo-input, .subtask-input {
+            width: 70%;
+            padding: 10px;
+            margin-bottom: 10px;
+            margin: 15px;
+        }
+
+        h1 {
+            font-weight: 800;
+            color: #fff;
+            text-align: center;
+        }
+
+        button {
+            margin: 13px;
+            padding: 11px 51px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .task-container {
+            margin: 10px 0;
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: 2px solid #ddd; /* Added border around each task container */
+        }
+
+        .task-content {
+            width: 100%;
+            border: 1px solid #000;
+            border-radius: 5px;
+        }
+
+        .task-content span {
+            flex-grow: 1;
+            flex-direction: column;
+        
+        }
+
+        .subtask-list {
+            padding-left: 20px;
+            margin-top: 5px;
+            border-left: 2px dashed #ddd;
+            display: flex;
+            flex-direction: column;
+            /* gap: 10px; */
+        }
+
+        .subtask-list li {
+            display: flex;
+           align-items: center;
+           gap: 10px;
+           border: 1px solid #555;
+           margin: 5px;
+           border-radius: 10px;
+          height: 50px;
+        }
+
+        .subtask-input-container {
+            display: none;
+        }
+
+        button.remove-button {
+            margin-left: auto;
+            background-color: #dc3545;
+            width: 23%;
+            /* height: 30px; */
+            margin: 13px;
+            padding: 11px 51px;
+        }
+
+        button.remove-button:hover {
+            background-color: #dc3545;
+        }
+
+        .edit-button {
+            background-color: #28a745;
+        }
+
+    </style>
+    <h1>To-Do List</h1>
+    <div class="todo-container">
+        <input type="text" id="todo-input" placeholder="Add new task...." />
+        <button onclick="addTask()">Add</button>
+        <ul id="todo-list"></ul>
+    </div>
+
+    <script>
+        function addTask() {
+            const inputField = document.getElementById("todo-input");
+            const taskText = inputField.value.trim();
+
+            if (taskText === "") {
+                alert("Please enter a task!");
+                return;
+            }
+
+            const todoList = document.getElementById("todo-list");
+
+            // Create a new task container (div)
+            const taskContainer = document.createElement("div");
+            taskContainer.classList.add("task-container");
+
+            taskContainer.innerHTML = `
+                <div class="task-content">
+                    <input type="checkbox" onclick="toggleSubtasks(this)">
+                    <span>${taskText}</span>
+                    <button class="edit-button" onclick="editTask(this)">Edit</button>
+                    <button onclick="addSubTask(this)">Sub-task</button>
+                    <button onclick="removeSelectedSubtasks(this)" class="remove-button">Delete</button>
+                </div>
+                <div class="subtask-input-container">
+                    <input type="text" class="subtask-input" placeholder="Enter subtask">
+                    <button onclick="addSubtaskToTask(this)">Sub-task</button>
+                </div>
+                <ul class="subtask-list"></ul>
+            `;
+
+            todoList.appendChild(taskContainer);
+            inputField.value = "";
+        }
+
+        function editTask(button) {
+            const taskContainer = button.closest(".task-container");
+            const taskText = taskContainer.querySelector("span");
+            const newText = prompt("Edit task:", taskText.textContent);
+
+            if (newText !== null && newText.trim() !== "") {
+                taskText.textContent = newText.trim();
+            }
+        }
+
+        function addSubTask(button) {
+            const taskContainer = button.closest(".task-container");
+            const subtaskInputContainer = taskContainer.querySelector(".subtask-input-container");
+
+            // Toggle the subtask input visibility when "Add Subtask" is clicked
+            subtaskInputContainer.style.display = subtaskInputContainer.style.display === "block" ? "none" : "block";
+            taskContainer.querySelector(".subtask-input").focus(); 
+        }
+
+        function addSubtaskToTask(button) {
+            const taskContainer = button.closest(".task-container");
+            const subtaskInput = taskContainer.querySelector(".subtask-input");
+            const subtaskText = subtaskInput.value.trim();
+
+            if (subtaskText) {
+                const subtaskList = taskContainer.querySelector(".subtask-list");
+                const subtaskItem = document.createElement("li");
+                subtaskItem.innerHTML = `
+                    <input type="checkbox" class="subtask-checkbox" onclick="updateParentCheckbox(this)">
+                    <span>${subtaskText}</span>
+                    <button class="edit-button" onclick="editSubtask(this)">Edit</button>
+                `;
+                subtaskList.appendChild(subtaskItem);
+
+                subtaskInput.value = "";
+                taskContainer.querySelector(".subtask-input-container").style.display = "none";
+            } else {
+                alert("Subtask cannot be empty!");
+            }
+        }
+
+        function toggleSubtasks(checkbox) {
+            const taskContainer = checkbox.closest(".task-container");
+            const subtasks = taskContainer.querySelectorAll(".subtask-list .subtask-checkbox");
+
+            subtasks.forEach((subtaskCheckbox) => {
+                subtaskCheckbox.checked = checkbox.checked;
+            });
+
+            updateParentCheckbox(checkbox);
+        }
+
+        function updateParentCheckbox(subtaskCheckbox) {
+            const taskContainer = subtaskCheckbox.closest(".task-container");
+            const allSubtasks = taskContainer.querySelectorAll(".subtask-list .subtask-checkbox");
+            const parentCheckbox = taskContainer.querySelector(".task-content input[type='checkbox']");
+
+            const allChecked = Array.from(allSubtasks).every((checkbox) => checkbox.checked);
+            const someChecked = Array.from(allSubtasks).some((checkbox) => checkbox.checked);
+
+            parentCheckbox.checked = allChecked;
+            parentCheckbox.indeterminate = !allChecked && someChecked;
+        }
+
+        function removeSelectedSubtasks(button) {
+            const taskContainer = button.closest(".task-container");
+            const subtasks = taskContainer.querySelectorAll(".subtask-list .subtask-checkbox");
+
+            subtasks.forEach((subtaskCheckbox) => {
+                if (subtaskCheckbox.checked) {
+                    const subtaskItem = subtaskCheckbox.closest("li");
+                    subtaskItem.remove();
+                }
+            });
+
+            const parentCheckbox = taskContainer.querySelector(".task-content input[type='checkbox']");
+            updateParentCheckbox(parentCheckbox);
+        }
+
+        function editSubtask(button) {
+            const subtaskItem = button.closest("li");
+            const subtaskText = subtaskItem.querySelector("span");
+            const newSubtaskText = prompt("Edit subtask:", subtaskText.textContent);
+
+            if (newSubtaskText !== null && newSubtaskText.trim() !== "") {
+                subtaskText.textContent = newSubtaskText.trim();
+            }
+        }
+    </script>
+</body>
+</html>

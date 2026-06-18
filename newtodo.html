@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="styles.css"> <!-- Add your external CSS link here -->
+</head>
+<body>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #1a5986;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 20px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 100px auto;
+  }
+
+  h1 {
+    text-align: center;
+    color: #fff;
+    margin: 100px auto;
+    font-weight: 900;
+  }
+
+  input[type="text"], input[type="datetime-local"] {
+    width: 96%;
+    padding: 10px;
+    margin-right: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+
+  button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    background-color: #f9f9f9;
+    margin: 10px;
+    padding: 2px;
+    border-radius: 5px;
+    border: 1px solid #000;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  li.completed {
+    text-decoration: line-through;
+    color: grey;
+  }
+
+  button.edit-btn, button.delete-btn, button.add-subtask-btn {
+    font-size: 14px;
+    margin-left: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  button.edit-btn {
+    background-color: #FF9800;
+    color: white;
+    width: 10%;
+    margin-left: 40px;
+  }
+
+  button.delete-btn {
+    background-color: #F44336;
+    color: white;
+    width: 11%;
+  }
+
+  button.add-subtask-btn {
+    background-color: #2196F3;
+    color: white;
+    width: 22%;
+  }
+
+  .subtask-list {
+    margin-top: 10px;
+    padding-left: 20px;
+  }
+
+  .subtask-input-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .subtask-input-container input {
+    width: 80%;
+    padding: 5px;
+    font-size: 14px;
+    margin-right: 10px;
+  }
+
+  .subtask-input-container button {
+    width: 18%;
+    font-size: 14px;
+  }
+</style>
+
+<h1>To-Do List</h1>
+
+<div class="container">
+  <input type="text" id="task-input" placeholder="Enter a new task">
+  <input type="datetime-local" id="task-datetime">
+  <button id="add-btn">Add Task</button>
+  <ul id="task-list"></ul>
+</div>
+
+<script>
+  // Function to format the date and time
+  function getFormattedDateTime() {
+    const now = new Date();
+    return now.toLocaleString();  // Returns a formatted string for current date and time
+  }
+
+  // Function to handle checkbox event for marking tasks/subtasks as completed
+  function handleCheckboxChange(event) {
+    const listItem = event.target.closest('li');
+    const checkbox = event.target;
+
+    // If it's a sub-task checkbox
+    if (listItem.closest('.subtask-list')) {
+      // Check the parent task
+      const parentTaskCheckbox = listItem.closest('ul').previousElementSibling.querySelector('.checkbox-btn');
+      if (checkbox.checked) {
+        parentTaskCheckbox.checked = true;
+      } else {
+        // Check if all subtasks are unchecked, if so, uncheck parent
+        const allSubtasksChecked = Array.from(listItem.closest('.subtask-list').children).every(subtask =>
+          subtask.querySelector('.checkbox-btn').checked
+        );
+        if (!allSubtasksChecked) {
+          parentTaskCheckbox.checked = false;
+        }
+      }
+    } else {
+      // If it's the parent task checkbox, handle checking/unchecking subtasks
+      const subtaskCheckboxes = listItem.querySelectorAll('.subtask-list .checkbox-btn');
+      subtaskCheckboxes.forEach(subtaskCheckbox => {
+        subtaskCheckbox.checked = checkbox.checked;
+      });
+    }
+
+    listItem.classList.toggle('', checkbox.checked);
+  }
+
+  document.getElementById('add-btn').addEventListener('click', function() {
+    const taskInput = document.getElementById('task-input');
+    const taskDatetimeInput = document.getElementById('task-datetime');
+    let taskText = taskInput.value.trim();
+    const taskDatetime = taskDatetimeInput.value;
+    
+    // Check if the task input is empty and prompt for task description
+    if (taskText === '') {
+      taskText = prompt("Please enter a task description:");
+      if (!taskText) return;  // If the user cancels or doesn't enter anything, stop the process
+    }
+
+    const taskList = document.getElementById('task-list');
+    const li = document.createElement('li');
+    
+    // Use the selected datetime or fallback to current time
+    const timestamp = taskDatetime ? taskDatetime : getFormattedDateTime(); 
+
+    li.innerHTML = ` 
+      <input type="checkbox" class="checkbox-btn">
+      <span class="task-text">${taskText}</span>
+      <span class="timestamp">[${timestamp}]</span>
+      <button class="edit-btn">Edit</button>
+      <button class="delete-btn">Delete</button>
+      <button class="add-subtask-btn">Add Sub-Task</button>
+      <div class="subtask-input-container" style="display:none;">
+        <input type="text" class="subtask-input" placeholder="Enter sub-task">
+        <button class="add-subtask-btn-input">Add</button>
+      </div>
+      <ul class="subtask-list"></ul>
+    `;
+
+    // Add the checkbox change event listener for the task
+    li.querySelector('.checkbox-btn').addEventListener('change', handleCheckboxChange);
+    
+    // Edit button functionality
+    li.querySelector('.edit-btn').addEventListener('click', function() {
+      const newTaskText = prompt("Edit your task:", taskText);
+      if (newTaskText) {
+        li.querySelector('.task-text').textContent = newTaskText;
+      }
+    });
+
+    // Delete button functionality (only delete checked tasks or subtasks)
+    li.querySelector('.delete-btn').addEventListener('click', function() {
+      const checkbox = li.querySelector('.checkbox-btn');
+      if (checkbox.checked) {
+        taskList.removeChild(li);  // Remove the task if it is checked
+      }
+    });
+
+    // Add Sub-Task button functionality
+    li.querySelector('.add-subtask-btn').addEventListener('click', function() {
+      const subtaskInputContainer = li.querySelector('.subtask-input-container');
+      subtaskInputContainer.style.display = subtaskInputContainer.style.display === 'none' ? 'flex' : 'none';
+    });
+
+    // Add Sub-task input button functionality
+    li.querySelector('.add-subtask-btn-input').addEventListener('click', function() {
+      const subtaskText = li.querySelector('.subtask-input').value.trim();
+      if (subtaskText) {
+        const subtaskList = li.querySelector('.subtask-list');
+        const subtaskLi = document.createElement('li');
+        const subtaskTimestamp = getFormattedDateTime();
+        
+        subtaskLi.innerHTML = `
+          <input type="checkbox" class="checkbox-btn">
+          <span class="task-text">${subtaskText}</span>
+          <span class="timestamp">[${subtaskTimestamp}]</span>
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        `;
+        
+        // Add the checkbox event listener for the subtask
+        subtaskLi.querySelector('.checkbox-btn').addEventListener('change', handleCheckboxChange);
+      
+      // Sub-task edit functionality
+      subtaskLi.querySelector('.edit-btn').addEventListener('click', function() {
+        const newSubTaskText = prompt("Edit your sub-task:", subtaskText);
+        if (newSubTaskText) {
+          subtaskLi.querySelector('.task-text').textContent = newSubTaskText;
+        }
+      });
+
+      // Sub-task delete functionality (only delete checked subtasks)
+      subtaskLi.querySelector('.delete-btn').addEventListener('click', function() {
+        const subtaskCheckbox = subtaskLi.querySelector('.checkbox-btn');
+        if (subtaskCheckbox.checked) {
+          subtaskList.removeChild(subtaskLi);  // Remove subtask if checked
+        }
+      });
+      
+      subtaskList.appendChild(subtaskLi);
+      li.querySelector('.subtask-input').value = '';  // Clear subtask input field
+    }
+  });
+
+  taskList.appendChild(li);
+  taskInput.value = ''; // Clear input field
+  taskDatetimeInput.value = ''; // Clear datetime field
+});
+
+
+
+</script>
+
+</body>
+</html>
